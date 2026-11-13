@@ -50,6 +50,8 @@ button { font: inherit; color: inherit; }
 .l3.floor { font-size: 13px; z-index: 2; background: var(--ink); color: var(--card); padding: 3px 9px; border-radius: 999px; text-shadow: none; font-weight: 700; }
 .l3.dim { font-size: 11px; font-weight: 600; color: var(--dim); background: var(--paper); background: color-mix(in srgb, var(--paper) 82%, transparent); padding: 0 4px; border-radius: 4px; text-shadow: none; }
 .l3.tag { font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.l3.pick { z-index: 3; }
+.l3.dim.pick { font-size: 12px; font-weight: 700; color: #1d2330; background: var(--sel); padding: 1px 5px; border-radius: 5px; }
 
 #chips { position: absolute; left: 10px; bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; max-width: calc(100% - 20px); padding-bottom: env(safe-area-inset-bottom); }
 .chip { border: 1px solid var(--line); background: var(--card); background: color-mix(in srgb, var(--card) 92%, transparent); border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600;
@@ -69,8 +71,20 @@ body[data-dim="3d"] #threed { display: flex; }
 #hint { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: var(--ink); color: var(--card); border-radius: 999px; padding: 6px 14px; font-size: 13px;
   font-weight: 600; pointer-events: none; opacity: 0; transition: opacity .2s; max-width: calc(100% - 130px); text-align: center; }
 #hint.on { opacity: .94; }
-#readout { position: absolute; left: 10px; top: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 8px 10px; font-size: 13px;
-  max-width: min(320px, calc(100% - 70px)); }
+/* what sits on the picture and speaks about it: the picked room's sizes, the ruler's readings */
+#dock { position: absolute; left: 10px; top: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: min(340px, calc(100% - 70px)); pointer-events: none; }
+#dock > * { pointer-events: auto; max-width: 100%; box-sizing: border-box; }
+#roominfo { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--sel); border-radius: 12px; box-shadow: var(--shadow); padding: 7px 8px 8px 10px; font-size: 13px; min-width: 240px; }
+#roominfo .top { display: flex; align-items: center; gap: 6px; }
+#roominfo .top b { font-size: 14.5px; white-space: nowrap; }
+#roominfo .top .k { flex: 1; min-width: 0; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#roominfo button { flex: none; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 4px 9px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+#roominfo .more { color: var(--accent); }
+#roominfo .nums { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+#roominfo .nums b { font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+#roominfo .nums span { font-size: 14px; font-weight: 600; }
+#roominfo .nums span + span { color: var(--muted); font-weight: 500; }
+#readout { background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 8px 10px; font-size: 13px; }
 #readout h4 { margin: 0 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ruler); }
 #readout .m { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; padding: 2px 0; }
 #readout .m b { font-size: 16px; font-variant-numeric: tabular-nums; }
@@ -179,11 +193,14 @@ details.more summary { cursor: pointer; font-weight: 600; color: var(--accent); 
   #chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; }
   #scalebar { bottom: 46px; }
-  #hint { top: auto; bottom: 52px; font-size: 12px; padding: 5px 11px; max-width: calc(100% - 24px); }
+  #stage.docked #scalebar { display: none; }      /* its place is taken */
+  #hint { top: auto; bottom: calc(52px + var(--lift, 0px)); font-size: 12px; padding: 5px 11px; max-width: calc(100% - 24px); }
   #viewctl { right: 8px; top: 8px; }
   #threed { left: 8px; right: auto; top: 8px; max-width: calc(100% - 64px); padding: 6px 8px; gap: 6px; }
   #threed input[type=range] { width: 96px; }
-  #readout { top: auto; bottom: 50px; left: 8px; max-width: calc(100% - 16px); }
+  #dock { top: auto; bottom: 50px; left: 8px; right: 8px; max-width: none; flex-direction: column-reverse; }   /* a thumb's reach: above the row of switches */
+  #roominfo { align-self: stretch; min-width: 0; }
+  #roominfo button { padding: 7px 12px; font-size: 13px; }
 }
 
 /* paper */
@@ -252,7 +269,10 @@ details.more summary { cursor: pointer; font-weight: 600; color: var(--accent); 
       <div id="chips" role="group" aria-label="Show"></div>
       <div id="viewctl"></div>
       <div id="threed"></div>
-      <div id="readout" hidden></div>
+      <div id="dock">
+        <div id="roominfo" hidden></div>
+        <div id="readout" hidden></div>
+      </div>
       <div id="hint"></div>
       <div id="scalebar"><span></span><i></i></div>
       <div id="front">front of the house ▲</div>
@@ -1376,6 +1396,7 @@ const Export = (function () {
 (function () {
   const stage = $("stage"), planEl = $("plan"), glEl = $("gl"), over = $("over"), labels = $("labels");
   let lay = null, view = null, fitted = true, has3d = false, fitted3d = false;
+  let nudge = 0;                           // 2D: how far (in the drawing's own units) the drawing was pushed up to keep the picked room clear of its card
   const rulers = [];                       // {floor, a, b}
   let pending = null, preview = null;      // first point of a measurement; the snapped spot under the pointer
   const LAYERS = [["names", "Names"], ["dims", "Wall lengths"], ["doors", "Door & window sizes"], ["casework", "Cabinets"], ["scan", "Furniture, as scanned"], ["grid", "Grid"]];
@@ -1463,7 +1484,21 @@ const Export = (function () {
     const bw = b[2] + 2 * m, bh = b[3] + 2 * m, s = Math.min(aw / bw, ah / bh);
     view = { w: w / s, h: h / s };
     view.x = b[0] - m - (aw / s - bw) / 2; view.y = b[1] - m - (ah / s - bh) / 2 - padT / s;
-    fitted = true; applyView();
+    fitted = true; nudge = 0; clear2d();
+  }
+  function clear2d() {                           // the card of the picked room must not lie on that room
+    if (S.dim !== "2d" || !lay || !view) return;
+    const [, h] = stageSize(), box = $("roominfo"), r = S.sel && ROOM[S.sel], it = r && lay.items.find(i => i.floor.id === r.floor);
+    if (nudge) { view.y -= nudge; nudge = 0; }                          // first back to where the reader had it
+    if (it && !box.hidden) {
+      const top = box.getBoundingClientRect().top - stage.getBoundingClientRect().top;
+      if (top > h / 2) {                                                // the card lies along the bottom
+        const ys = r.poly.map(q => (Plan2D.toSheet(it, q)[1] - view.y) / view.h * h);
+        const d = Math.min(Math.max(...ys) - (top - 12), Math.min(...ys) - 10);    // up by what is covered, the room's top staying in sight
+        if (d > 1) { nudge = d * view.h / h; view.y += nudge; }
+      }
+    }
+    applyView();
   }
   function applyView() {
     planEl.setAttribute("viewBox", [view.x, view.y, view.w, view.h].map(v => v.toFixed(2)).join(" "));
@@ -1477,7 +1512,7 @@ const Export = (function () {
     const [w, h] = stageSize(), sx = view.x + cx / w * view.w, sy = view.y + cy / h * view.h;
     const nw = clamp(view.w * f, 120, 12000), k = nw / view.w;
     view.x = sx - (sx - view.x) * k; view.y = sy - (sy - view.y) * k; view.w = nw; view.h = view.h * k;
-    fitted = false; applyView();
+    fitted = false; nudge = 0; applyView();
   }
   function sheetAt(px, py) { const [w, h] = stageSize(); return [view.x + px / w * view.w, view.y + py / h * view.h]; }
   function spot2d(px, py) {                      // {floor, p, item}: the place in the house under a point of the screen
@@ -1497,12 +1532,12 @@ const Export = (function () {
       const [w, h] = stageSize();
       if (ptrs.size === 2 && pinch) {
         const a = [...ptrs.values()], d = dist(a[0], a[1]), c = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2];
-        view.x -= (c[0] - pinch.c[0]) / w * view.w; view.y -= (c[1] - pinch.c[1]) / h * view.h;
+        view.x -= (c[0] - pinch.c[0]) / w * view.w; view.y -= (c[1] - pinch.c[1]) / h * view.h; nudge = 0;
         zoom2d(pinch.d / Math.max(d, 1), c[0] - r.left, c[1] - r.top);
         pinch = { d, c }; moved += 10; return;
       }
       const dx = e.clientX - last[0], dy = e.clientY - last[1]; moved += Math.abs(dx) + Math.abs(dy); last = [e.clientX, e.clientY];
-      if (moved > 4) { planEl.classList.add("drag"); view.x -= dx / w * view.w; view.y -= dy / h * view.h; fitted = false; applyView(); }
+      if (moved > 4) { planEl.classList.add("drag"); view.x -= dx / w * view.w; view.y -= dy / h * view.h; fitted = false; nudge = 0; applyView(); }
     });
     const up = e => {
       const r = stage.getBoundingClientRect(), had = ptrs.size;
@@ -1587,11 +1622,12 @@ const Export = (function () {
     S.ruler = on; pending = null; preview = null;
     document.body.classList.toggle("ruler", on); $("rulerBtn").setAttribute("aria-pressed", String(on));
     if (on) hint("Tap two points. The ruler catches corners and walls.", 4200);
-    readout(); redraw(false); overlay2d();
+    readout(); info(); redraw(false); overlay2d();
   }
+  function lift() { const d = $("dock"), up = d.offsetHeight; stage.style.setProperty("--lift", (up ? up + 8 : 0) + "px"); stage.classList.toggle("docked", up > 0); }
   function readout() {
     const box = $("readout");
-    if (!S.ruler && !rulers.length) { box.hidden = true; return; }
+    if (!S.ruler && !rulers.length) { box.hidden = true; lift(); return; }
     box.hidden = false; box.innerHTML = "";
     box.appendChild(el("h4", { text: "Ruler" }));
     if (!rulers.length) box.appendChild(el("div", { class: "note", style: "color:var(--muted)", text: pending ? "First point set. Tap the second." : "Tap a point on the plan, then another." }));
@@ -1603,17 +1639,34 @@ const Export = (function () {
     });
     if (rulers.length) box.appendChild(el("button", { type: "button", text: "Clear all", onclick: () => { rulers.length = 0; pending = null; readout(); redraw(false); overlay2d(); } }));
     if (S.ruler) box.appendChild(el("button", { type: "button", text: "Done", onclick: () => setRuler(false) }));
+    lift();
   }
 
   // ---- picking a room ------------------------------------------------------------------------------
   function select(id, fromPlan) {
     S.sel = id;
+    if (id) $("hint").classList.remove("on");       // a hint still up would lie on the sizes it promised
     if (id && S.floor !== "all" && ROOM[id].floor !== S.floor) { setFloor(ROOM[id].floor); return; }
     if (S.dim === "2d") overlay2d(); else GL3D.touch();
-    if (id && fromPlan && !S.panel && window.innerWidth > 760) { /* leave the panel as the reader has it */ }
     if (S.tab !== "rooms" && id) S.tab = "rooms";
     panel();
     if (id) { const row = document.querySelector('#tabbody [data-card="' + id + '"]'); if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  }
+
+  // A tap on a room has to answer "how big is it" there and then. With the panel open its card does; with the panel
+  // shut (as on a phone, where it would take half the screen) this does: area, size and ceiling, and a way to the rest.
+  function info() {
+    const box = $("roominfo"), r = S.sel && ROOM[S.sel];
+    if (!r || S.panel || S.ruler) { box.hidden = true; lift(); clear2d(); return; }
+    const f = FLOOR[r.floor], s = roomSize(r), what = r.what && !r.name.toLowerCase().includes(r.what.toLowerCase()) ? " · " + r.what : "";
+    box.hidden = false; box.innerHTML = "";
+    box.appendChild(el("div", { class: "top" }, [
+      el("b", { html: sw(r) + esc(r.name) }), el("span", { class: "k", text: f.name + what }),
+      el("button", { type: "button", class: "more", text: "More", title: "Everything about this room", onclick: () => { S.panel = true; S.tab = "rooms"; keep(); panel(); onResize(); select(r.id); } }),
+      el("button", { type: "button", text: "✕", title: "Close", "aria-label": "Close", onclick: () => select(null) })]));
+    box.appendChild(el("div", { class: "nums" }, [
+      el("b", { text: fmtArea(r.area) }), el("span", { text: fmtSize(s[0], s[1]) + (r.rectangular ? "" : " at its widest") }), el("span", { text: "ceiling " + fmtLen(r.ceiling) })]));
+    lift(); clear2d();
   }
 
   // ---- 3D: names, sizes and the ruler over the picture ----------------------------------------------------
@@ -1635,23 +1688,35 @@ const Export = (function () {
       for (const c of [[-T_OUT, -T_OUT], [HW + T_OUT, -T_OUT], [HW + T_OUT, HL + T_OUT], [-T_OUT, HL + T_OUT]]) { const p = GL3D.project(GL3D.world(f, c, -f.slab / 2)); if (p && (!best || p[0] < best[0])) best = p; }
       if (on(best)) { const x = Math.max(58, best[0] - 52); label(n++, "floor", esc(f.name), x, best[1]); placed.push([x, best[1], 120, 28]); }
     }
-    if (S.layers.names) for (const f of fl) for (const r of f.rooms) {
-      if (r.of && !one) continue;
+    const sel = S.sel && ROOM[S.sel], selF = sel ? fl.find(f => f.id === sel.floor) : null;
+    const name = (f, r, picked) => {
+      if (r.of && !one && !picked) return;
       const p = GL3D.project(GL3D.world(f, r.label, 0.05));
-      if (!on(p) || (!one && GL3D.covered(f, r.label, 0.05))) continue;
+      if (!on(p) || (!one && !picked && GL3D.covered(f, r.label, 0.05))) return;
       const far = p[2] > 34;
-      if (r.of) { if (!far && room(p[0], p[1], 70, 16)) label(n++, "tag", esc(r.name.replace(/^.* closet$/i, "Closet")), p[0], p[1]); }
-      else if (room(p[0], p[1], 90, far ? 16 : 30)) label(n++, "", esc(r.name) + (far ? "" : "<small>" + fmtArea(r.area_with_closets || r.area) + "</small>"), p[0], p[1]);
-    }
-    const sel = S.sel && ROOM[S.sel];
-    if (S.layers.dims) for (const f of fl) for (const r of f.rooms) {
-      if (!one && !(sel && (sel.id === r.id || sel.id === r.of))) continue;
-      const hw = GL3D.wallHeight(f);
-      for (const e of roomEdges(r)) {
-        if (e.len < 0.6) continue;
+      if (r.of && !picked) { if (!far && room(p[0], p[1], 70, 16)) label(n++, "tag", esc(r.name.replace(/^.* closet$/i, "Closet")), p[0], p[1]); }
+      else if (room(p[0], p[1], 90, far ? 16 : 30)) label(n++, picked ? "pick" : "", esc(r.name) + (far ? "" : "<small>" + fmtArea(r.area) + "</small>"), p[0], p[1]);
+    };
+    const walls = (f, r, picked) => {
+      const hw = GL3D.wallHeight(f), E = roomEdges(r).filter(e => e.len >= 0.6);
+      if (picked) E.sort((a, b) => b.len - a.len);    // the long walls first: they say how big the room is
+      for (const e of E) {
         const m = [(e.a[0] + e.b[0]) / 2 + e.n[0] * 0.02, (e.a[1] + e.b[1]) / 2 + e.n[1] * 0.02], p = GL3D.project(GL3D.world(f, m, hw + 0.03));
-        if (on(p) && p[2] < 30 && room(p[0], p[1], 58, 15)) label(n++, "dim", fmtLen(e.len), p[0], p[1]);
+        if (on(p) && (picked || p[2] < 30) && room(p[0], p[1], picked ? 54 : 58, picked ? 17 : 15)) label(n++, picked ? "dim pick" : "dim", fmtLen(e.len), p[0], p[1]);
       }
+    };
+    // the picked room before all others, and however far away: nothing may take the place of its sizes
+    // (seen from far, as on a phone, its walls go before its name, which the card says too; from near, both fit)
+    if (selF) {
+      const pl = GL3D.project(GL3D.world(selF, sel.label, 0.05)), near = !!pl && pl[2] <= 34;
+      if (near && S.layers.names) name(selF, sel, true);
+      if (S.layers.dims) walls(selF, sel, true);
+      if (!near && S.layers.names) name(selF, sel, true);
+    }
+    if (S.layers.names) for (const f of fl) for (const r of f.rooms) if (r !== sel) name(f, r, false);
+    if (S.layers.dims) for (const f of fl) for (const r of f.rooms) {
+      const its = !!(sel && sel.id === r.of);          // a closet of the picked room
+      if (r !== sel && (one || its)) walls(f, r, its);
     }
     if (S.layers.doors && one) for (const f of fl) {
       const hw = GL3D.wallHeight(f);
@@ -1703,6 +1768,7 @@ const Export = (function () {
   function panel() {
     document.body.classList.toggle("panel", !!S.panel);
     $("panelBtn").setAttribute("aria-pressed", String(!!S.panel));
+    info();
     if (!S.panel) return;
     const tabs = $("tabs"); tabs.innerHTML = "";
     for (const [k, name] of TABS) tabs.appendChild(el("button", { type: "button", role: "tab", "aria-selected": String(S.tab === k), text: name, onclick: () => { S.tab = k; keep(); panel(); } }));
@@ -1928,7 +1994,7 @@ const Export = (function () {
   window.addEventListener("beforeprint", () => { if (!$("print").firstChild) buildPrint(); });
   panel(); setDim(S.dim); readout();
   const small = window.innerWidth < 700;
-  if (!S.sel) setTimeout(() => hint(S.dim === "3d" ? (small ? "Drag to turn · pinch to zoom · tap a room" : "Drag to turn · scroll or pinch to zoom · tap a room") : (small ? "Drag · pinch to zoom · tap a room" : "Drag to move · scroll or pinch to zoom · tap a room"), 4200), 500);
+  if (!S.sel) setTimeout(() => hint(S.dim === "3d" ? (small ? "Drag to turn · pinch to zoom · tap a room for its sizes" : "Drag to turn · scroll or pinch to zoom · tap a room for its sizes") : (small ? "Drag · pinch to zoom · tap a room for its sizes" : "Drag to move · scroll or pinch to zoom · tap a room for its sizes"), 4200), 500);
   // the page checking itself (open it with ?selftest=1): every part is run once and the outcome shown
   function selftest() {
     const out = [], ok = (name, cond) => out.push((cond ? "ok    " : "FAIL  ") + name);
@@ -1938,6 +2004,9 @@ const Export = (function () {
       ok("2D draws every room of the top floor", planEl.querySelectorAll(".room").length === FLOOR.top.rooms.length);
       S.panel = true; panel(); select("t4");
       ok("picking Room 4 shows its 145 ft²", S.sel === "t4" && /145\.1/.test($("tabbody").textContent));
+      S.panel = false; panel();
+      ok("with the panel shut its sizes stand on the picture", !$("roominfo").hidden && /Room 4.*145\.1.ft².*16. 8. × 9. 4./.test($("roominfo").textContent) && $("roominfo").getBoundingClientRect().height > 30);
+      S.panel = true; panel();
       setRuler(true); rulerPoint(FLOOR.top, [0, 0]); rulerPoint(FLOOR.top, [HW, 0]);
       ok("the ruler measures the house's width", rulers.length === 1 && Math.abs(dist(rulers[0].a, rulers[0].b) - HW) < 1e-6 && /18. 10/.test($("readout").textContent));
       const s = snap(FLOOR.top, [0.04, 0.03], 0.1);
